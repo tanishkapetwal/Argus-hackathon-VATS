@@ -17,4 +17,8 @@ def get_provider(settings: Settings | None = None) -> LLMProvider:
     if settings.llm_provider == "openai":
         from app.llm.openai_provider import OpenAIProvider  # noqa: WPS433
         return OpenAIProvider(settings)
+    if settings.llm_provider == "scripted":
+        # Offline/keyless demo provider (canned structured output). See scripted_provider.py.
+        from app.llm.scripted_provider import ScriptedProvider  # noqa: WPS433
+        return ScriptedProvider(settings)
     raise ValueError(f"Unknown LLM_PROVIDER: {settings.llm_provider!r}")

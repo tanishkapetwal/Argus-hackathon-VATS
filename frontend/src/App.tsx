@@ -1,100 +1,174 @@
-// App shell for the Live Agent Trace View. Layout per docs/trace-view.md §2.
-// This is a runnable skeleton with the regions and the event-handling outline; fill in the
-// graph/inspector/plan rendering in build-plan Phase 6.
+// Live Agent Trace View (build-plan Phase 6/7). Two phases: a conversational intake collects the
+// profile, then the multi-agent debate streams in live. The whole debate view is a pure function
+// of the backend TraceEvent stream — deriveView() folds it; the panels just render the result.
 
-import { useCallback, useRef, useState } from "react";
-import { AGENT_ORDER } from "./lib/agentMeta";
-import { startPlan, subscribeTrace } from "./lib/api";
-import type { HealthPlan, TraceEvent, UserProfile } from "./lib/types";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { AgentGraph } from "./components/AgentGraph";
+import { ChatIntake } from "./components/ChatIntake";
+import { ExecutionLog } from "./components/ExecutionLog";
+import { FinalPlanPanel } from "./components/FinalPlanPanel";
+import { Inspector } from "./components/Inspector";
+import { getRun, startPlan, subscribeTrace } from "./lib/api";
+import { deriveView } from "./lib/traceModel";
+import type { TraceEvent, UserProfile } from "./lib/types";
 
-// A demo profile that FORCES conflicts (great for the live demo — see docs/trace-view.md §4).
-const DEMO_PROFILE: UserProfile = {
-  age: 34, sex: "male", height_cm: 178, weight_kg: 92, activity_level: "light",
-  goal: "fat_loss", target_weight_kg: 78, timeframe_weeks: 12,
-  medical_conditions: ["knee injury", "hypertension"], medications: [], allergies: ["peanuts"],
-  budget_weekly: 1500, currency: "INR", diet_preference: "high protein, vegetarian",
-  disliked_foods: ["mushroom"], equipment_access: ["dumbbells"],
-  days_per_week: 4, session_minutes: 45, notes: "wants visible results fast",
+const STATUS_DOT: Record<string, string> = {
+  idle: "bg-slate-500",
+  running: "bg-cyan-400 shadow-glow-cyan animate-glow-pulse",
+  complete: "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.7)]",
+  error: "bg-rose-500 shadow-glow-rose",
 };
 
 export default function App() {
   const [events, setEvents] = useState<TraceEvent[]>([]);
-  const [plan, setPlan] = useState<HealthPlan | null>(null);
-  const [running, setRunning] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [phase, setPhase] = useState<"intake" | "run">("intake");
+  const [replayId, setReplayId] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
 
+  const view = useMemo(() => deriveView(events), [events]);
+
   const onEvent = useCallback((e: TraceEvent) => {
-    setEvents((prev) => [...prev, e].sort((a, b) => a.seq - b.seq)); // guarantee ordering
-    if (e.type === "RUN_COMPLETED") {
-      setPlan((e.payload as { plan?: HealthPlan }).plan ?? (e.payload as unknown as HealthPlan));
+    setEvents((prev) => {
+      if (prev.some((x) => x.seq === e.seq)) return prev;
+      return [...prev, e].sort((a, b) => a.seq - b.seq);
+    });
+    if (e.type === "RUN_COMPLETED" || e.type === "ERROR") {
       setRunning(false);
       cleanupRef.current?.();
     }
   }, []);
 
-  async function run() {
-    setEvents([]); setPlan(null); setRunning(true);
-    const { run_id } = await startPlan(DEMO_PROFILE);
-    cleanupRef.current = subscribeTrace(run_id, onEvent);
-  }
+  const run = useCallback(async (profile: UserProfile) => {
+    cleanupRef.current?.();
+    setEvents([]);
+    setSelected(null);
+    setNotice(null);
+    setRunning(true);
+    setPhase("run");
+    try {
+      const { run_id } = await startPlan(profile);
+      setReplayId(run_id);
+      cleanupRef.current = subscribeTrace(run_id, onEvent, () =>
+        setNotice("WebSocket error — is the backend running on :8000?"),
+      );
+    } catch (err) {
+      setRunning(false);
+      setNotice(`Could not reach the backend: ${(err as Error).message}. Start it on :8000.`);
+    }
+  }, [onEvent]);
+
+  const replay = useCallback(async () => {
+    const id = replayId.trim();
+    if (!id) return;
+    cleanupRef.current?.();
+    setRunning(false);
+    setNotice(null);
+    setPhase("run");
+    try {
+      const { events: log } = await getRun(id);
+      setEvents([...log].sort((a, b) => a.seq - b.seq));
+      setSelected(null);
+    } catch (err) {
+      setNotice(`Replay failed: ${(err as Error).message}`);
+    }
+  }, [replayId]);
+
+  const newPlan = () => {
+    cleanupRef.current?.();
+    setRunning(false);
+    setEvents([]);
+    setSelected(null);
+    setNotice(null);
+    setPhase("intake");
+  };
+
+  const roundLabel = view.maxRounds != null ? `${view.round}/${view.maxRounds}` : `${view.round}`;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      <header className="flex items-center justify-between border-b bg-white px-6 py-3">
-        <h1 className="text-lg font-semibold">Health Plan Optimizer · Agent Trace</h1>
-        <button
-          onClick={run}
-          disabled={running}
-          className="rounded bg-indigo-600 px-4 py-2 text-white disabled:opacity-50"
-        >
-          {running ? "Running…" : "Run demo plan"}
-        </button>
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-slate-950/70 px-6 py-3 backdrop-blur-xl">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 text-sm shadow-glow">⬡</div>
+          <h1 className="neon-text text-lg font-bold tracking-tight">Health Plan Optimizer</h1>
+          <span className="hidden text-xs text-slate-500 sm:inline">· multi-agent decision intelligence</span>
+          {phase === "run" && (
+            <span className="ml-2 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300">
+              <span className={`h-2 w-2 rounded-full ${STATUS_DOT[view.runStatus]}`} />
+              {view.runStatus}{view.runId ? ` · ${view.runId}` : ""} · round {roundLabel}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {phase === "run" && (
+            <button onClick={newPlan} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 hover:bg-white/10">
+              ＋ New plan
+            </button>
+          )}
+          <div className="flex items-center gap-1">
+            <input
+              value={replayId}
+              onChange={(e) => setReplayId(e.target.value)}
+              placeholder="run_id"
+              className="w-24 rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/60 focus:outline-none"
+            />
+            <button onClick={replay} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 hover:bg-white/10">
+              Replay
+            </button>
+          </div>
+        </div>
       </header>
 
-      <main className="grid grid-cols-3 gap-4 p-6">
-        {/* TODO(6.2): Agent graph (React Flow). Nodes from AGENT_ORDER; edges from MESSAGE_SENT
-            / REVISION_REQUESTED; status colors from AGENT_STARTED/COMPLETED/CONFLICT_RAISED. */}
-        <section className="col-span-2 rounded border bg-white p-4">
-          <h2 className="mb-2 font-medium">Agent graph</h2>
-          <ul className="flex flex-wrap gap-2 text-sm">
-            {AGENT_ORDER.map((name) => (
-              <li key={name} className="rounded border px-3 py-1">{name}</li>
-            ))}
-          </ul>
-          <p className="mt-3 text-xs text-slate-500">
-            Replace with a React Flow graph — see docs/trace-view.md §2.
-          </p>
-        </section>
+      {notice && (
+        <div className="mx-6 mt-3 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">
+          {notice}
+        </div>
+      )}
 
-        {/* TODO(6.3): Inspector — selected agent's input/output/tools for the current round. */}
-        <aside className="rounded border bg-white p-4">
-          <h2 className="mb-2 font-medium">Inspector</h2>
-          <p className="text-xs text-slate-500">Click a node or a log row.</p>
-        </aside>
-      </main>
+      {phase === "intake" ? (
+        <main className="flex flex-1 flex-col px-4 pb-4">
+          <div className="mx-auto mt-6 max-w-2xl text-center">
+            <h2 className="text-2xl font-bold text-slate-100">Let's build your plan</h2>
+            <p className="mt-1 text-sm text-slate-400">
+              Answer a few questions; then six specialist agents debate, challenge, and reconcile a single plan — live.
+            </p>
+          </div>
+          <div className="mt-2 min-h-0 flex-1">
+            <ChatIntake onComplete={run} />
+          </div>
+        </main>
+      ) : (
+        <main className="flex-1 space-y-4 p-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <section className="glass p-2 lg:col-span-2">
+              <h2 className="px-2 py-1 text-sm font-medium text-slate-300">Agent debate graph</h2>
+              <div className="h-[560px] w-full overflow-hidden rounded-xl">
+                <AgentGraph view={view} selected={selected} onSelect={setSelected} />
+              </div>
+            </section>
+            <aside className="glass p-4">
+              <h2 className="mb-2 text-sm font-medium text-slate-300">Inspector</h2>
+              <Inspector view={view} selected={selected} />
+            </aside>
+          </div>
 
-      {/* TODO(6.4): Execution log — the raw streamed TraceEvents. */}
-      <section className="mx-6 mb-6 rounded border bg-white p-4">
-        <h2 className="mb-2 font-medium">Execution log</h2>
-        <ol className="max-h-64 overflow-auto font-mono text-xs">
-          {events.map((e) => (
-            <li key={e.seq} className="py-0.5">
-              <span className="text-slate-400">{String(e.seq).padStart(3, "0")}</span>{" "}
-              <span className="text-indigo-600">{e.type}</span>{" "}
-              {e.agent ? <span className="text-emerald-700">{e.agent}</span> : null}{" "}
-              <span className="text-slate-600">{e.summary}</span>
-            </li>
-          ))}
-        </ol>
-      </section>
+          <section className="glass p-4">
+            <h2 className="mb-2 text-sm font-medium text-slate-300">Execution log</h2>
+            {events.length === 0 ? (
+              <p className="text-xs text-slate-500">Waiting for the first events…</p>
+            ) : (
+              <ExecutionLog events={events} selected={selected} onSelect={setSelected} />
+            )}
+          </section>
 
-      {/* TODO(6.5): Final plan panel — render the HealthPlan incl. agent_contributions. */}
-      {plan && (
-        <section className="mx-6 mb-10 rounded border-2 border-indigo-200 bg-white p-4">
-          <h2 className="mb-2 font-medium">Final Health Plan</h2>
-          <p className="text-sm">{plan.summary}</p>
-          <p className="mt-2 text-xs text-amber-700">{plan.disclaimers?.join(" ")}</p>
-        </section>
+          {view.finalPlan && (
+            <section className="glass border-indigo-400/30 p-4 shadow-glow">
+              <h2 className="mb-3 text-base font-semibold text-slate-100">✨ Final Health Plan</h2>
+              <FinalPlanPanel plan={view.finalPlan} />
+            </section>
+          )}
+        </main>
       )}
     </div>
   );

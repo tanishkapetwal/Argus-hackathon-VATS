@@ -1,3 +1,81 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-slate-950 text-slate-200 antialiased;
+    background-image:
+      radial-gradient(60rem 60rem at 15% -10%, rgba(99, 102, 241, 0.16), transparent 60%),
+      radial-gradient(50rem 50rem at 100% 0%, rgba(34, 211, 238, 0.12), transparent 55%),
+      radial-gradient(60rem 40rem at 50% 120%, rgba(168, 85, 247, 0.12), transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  /* Glassmorphic surface used across panels. */
+  .glass {
+    @apply rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl;
+  }
+  .glass-soft {
+    @apply rounded-xl border border-white/10 bg-white/[0.03];
+  }
+  .neon-text {
+    background: linear-gradient(90deg, #818cf8, #22d3ee, #c084fc, #818cf8);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    @apply animate-gradient-x;
+  }
+}
+
+/* Thin neon scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+/* React Flow dark theme overrides */
+.react-flow__attribution {
+  display: none;
+}
+.react-flow__controls {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.react-flow__controls-button {
+  background: rgba(15, 23, 42, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+}
+.react-flow__controls-button:hover {
+  background: rgba(30, 41, 59, 0.95);
+}
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+.react-flow__edge-text {
+  fill: #cbd5e1;
+}
+.react-flow__edge-textbg {
+  fill: #0b1020;
+}

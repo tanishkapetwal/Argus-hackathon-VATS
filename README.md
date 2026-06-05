@@ -49,20 +49,45 @@ default) · React + Vite + Tailwind · real tools (USDA FoodData Central, web se
 
 ## Quickstart
 
-```bash
-# Backend
-cd backend
-cp ../.env.example .env       # add your LLM + API keys
-pip install -e .
-uvicorn app.api.main:app --reload
+**1. Backend** (terminal 1):
 
-# Frontend (separate terminal)
-cd frontend
-npm install
-npm run dev
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -e .
+
+# Option A — offline demo, NO API key (deterministic "scripted" agents):
+LLM_PROVIDER=scripted USE_SEEDED_PRICES=true USDA_FDC_API_KEY= \
+  uvicorn app.api.main:app --reload
+
+# Option B — real Claude agents (needs a key):
+cp ../.env.example .env        # set ANTHROPIC_API_KEY, keep LLM_PROVIDER=anthropic
+uvicorn app.api.main:app --reload
 ```
 
-Open http://localhost:5173.
+**2. Frontend** (terminal 2):
+
+```bash
+cd frontend
+npm install
+npm run dev          # http://localhost:5173 (CORS allows any localhost port)
+```
+
+Open the URL Vite prints, pick a demo profile, and click **Run plan**.
+
+### Demo profiles
+
+Three seeded profiles (selectable in the UI) each tell a different story:
+
+| Profile | What it demonstrates |
+|---------|----------------------|
+| **Conflict & refinement** | Aggressive fat-loss + knee injury + hypertension + tight ₹1500 budget → Budget overrun → a refinement round that converges. |
+| **Comfortable budget** | Generous budget, no injuries → the plan fits first time; the Critic approves with no loop. |
+| **Red flag → referral** | Chest pain + uncontrolled hypertension → the Medical Risk gate escalates and the Resolver returns a "see a professional first" plan. |
+
+The 90-second demo narrative (Medical Risk gate → calorie handshake → budget pushback →
+Critic conflict → Resolver synthesis) is in [docs/trace-view.md](docs/trace-view.md) §4 and is
+covered end-to-end by `frontend/scripts/demo_narrative.ts`.
 
 ## Documentation
 
