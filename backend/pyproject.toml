@@ -11,8 +11,8 @@ dependencies = [
     # Orchestration
     "langgraph>=0.2",
     "langchain-core>=0.3",
-    # LLM providers (default: anthropic; openai optional)
-    "anthropic>=0.39",
+    # LLM providers (default: gemini; openai optional)
+    "google-genai>=0.2",
     # "openai>=1.40",            # uncomment if using the OpenAI provider
     # API + realtime
     "fastapi>=0.110",

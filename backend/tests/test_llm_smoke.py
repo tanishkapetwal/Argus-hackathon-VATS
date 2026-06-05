@@ -1,8 +1,8 @@
 """Live smoke test (build-plan Phase 2 demo): get a structured Pydantic object back from the
 DEFAULT provider via a real API call.
 
-Skipped automatically unless ANTHROPIC_API_KEY is set, so the suite stays green offline. To run
-it for real:  ANTHROPIC_API_KEY=sk-ant-... .venv/bin/python -m pytest tests/test_llm_smoke.py -s
+Skipped automatically unless GEMINI_API_KEY is set, so the suite stays green offline. To run
+it for real:  GEMINI_API_KEY=AIza... .venv/bin/python -m pytest tests/test_llm_smoke.py -s
 """
 from __future__ import annotations
 
@@ -20,9 +20,9 @@ class Person(BaseModel):
     occupation: str
 
 
-@pytest.mark.skipif(not os.getenv("ANTHROPIC_API_KEY"), reason="ANTHROPIC_API_KEY not set")
+@pytest.mark.skipif(not os.getenv("GEMINI_API_KEY"), reason="GEMINI_API_KEY not set")
 async def test_structured_object_from_default_provider():
-    provider = get_provider()  # default = AnthropicProvider from Settings
+    provider = get_provider()  # default = GeminiProvider from Settings
     out = await provider.complete(
         [{"role": "user", "content": "Ada Lovelace, age 36, mathematician. Fill the schema."}],
         response_model=Person,

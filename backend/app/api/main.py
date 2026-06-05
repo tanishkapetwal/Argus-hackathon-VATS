@@ -88,7 +88,7 @@ async def trace_ws(ws: WebSocket, run_id: str) -> None:
         while True:
             event = await queue.get()
             await ws.send_json(event.model_dump(mode="json"))
-            if event.type == TraceEventType.RUN_COMPLETED:
+            if event.type in (TraceEventType.RUN_COMPLETED, TraceEventType.ERROR):
                 break
     except WebSocketDisconnect:
         pass

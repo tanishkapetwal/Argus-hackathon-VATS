@@ -11,9 +11,9 @@ from app.llm.base import LLMProvider
 
 def get_provider(settings: Settings | None = None) -> LLMProvider:
     settings = settings or get_settings()
-    if settings.llm_provider == "anthropic":
-        from app.llm.anthropic_provider import AnthropicProvider  # noqa: WPS433
-        return AnthropicProvider(settings)
+    if settings.llm_provider == "gemini":
+        from app.llm.gemini_provider import GeminiProvider  # noqa: WPS433
+        return GeminiProvider(settings)
     if settings.llm_provider == "openai":
         from app.llm.openai_provider import OpenAIProvider  # noqa: WPS433
         return OpenAIProvider(settings)

@@ -25,6 +25,7 @@ export default function App() {
   const [phase, setPhase] = useState<"intake" | "run">("intake");
   const [replayId, setReplayId] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
+  const [, setRunning] = useState(false);
   const cleanupRef = useRef<(() => void) | null>(null);
 
   const view = useMemo(() => deriveView(events), [events]);

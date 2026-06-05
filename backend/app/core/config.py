@@ -11,10 +11,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # LLM provider selection
-    llm_provider: str = "anthropic"
-    anthropic_api_key: str = ""
-    llm_model_strong: str = "claude-opus-4-8"
-    llm_model_fast: str = "claude-haiku-4-5-20251001"
+    llm_provider: str = "gemini"
+    gemini_api_key: str = ""
+    llm_model_strong: str = "gemini-2.5-flash"
+    llm_model_fast: str = "gemini-2.5-flash"
     # OpenAI (optional)
     openai_api_key: str = ""
     openai_model_strong: str = "gpt-4o"
