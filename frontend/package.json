@@ -1,0 +1,29 @@
+{
+  "name": "health-plan-optimizer-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Live Agent Trace View for the Health Plan Optimizer (Argusoft Hackathon Two).",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext ts,tsx"
+  },
+  "dependencies": {
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "reactflow": "^11.11.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.3.0"
+  },
+  "_note": "Reference manifest for build-plan Phase 0.6/6. Run `npm install` then `npm run dev`. reactflow powers the agent graph (docs/trace-view.md §2); drop it if you hand-roll the layout."
+}

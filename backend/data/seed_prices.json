@@ -1,0 +1,31 @@
+{
+  "_comment": "Deterministic price fallback for the Budget Agent (docs/agents/budget-agent.md). Used when USE_SEEDED_PRICES=true or a live price lookup fails. Units noted per item. Extend freely; keys are lowercased item names matched by app/tools/prices.py.",
+  "currency": "INR",
+  "groceries_per_kg": {
+    "chicken breast": 250.0,
+    "rice": 60.0,
+    "lentils": 120.0,
+    "tofu": 200.0,
+    "paneer": 350.0,
+    "oats": 90.0,
+    "spinach": 40.0,
+    "broccoli": 80.0,
+    "banana": 50.0,
+    "peanut butter": 400.0
+  },
+  "groceries_per_unit": {
+    "eggs": 7.0,
+    "milk_per_litre": 60.0,
+    "bread_loaf": 45.0
+  },
+  "supplements_per_kg": {
+    "whey protein": 2000.0,
+    "creatine": 1500.0
+  },
+  "fitness": {
+    "gym membership_per_month": 1500.0,
+    "dumbbells_one_time": 2500.0,
+    "resistance bands_one_time": 800.0,
+    "yoga mat_one_time": 600.0
+  }
+}

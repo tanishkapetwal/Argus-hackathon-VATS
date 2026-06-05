@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import pydantic, pydantic_settings; print\\('pydantic', pydantic.VERSION\\)\")",
+      "Bash(python3 -m pytest --version)",
+      "Bash(python3 -c \"import httpx; print\\('httpx', httpx.__version__\\)\")",
+      "Bash(python3 -m pip --version)",
+      "Bash(python3 -m venv --help)",
+      "Bash(python3 -m venv .venv)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(curl -sSL --max-time 15 https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py)",
+      "Read(//tmp/**)",
+      "Bash(python3 -m venv --without-pip .venv)",
+      "Bash(.venv/bin/python /tmp/get-pip.py)",
+      "Bash(.venv/bin/python -m pip --version)",
+      "Bash(.venv/bin/python -m pip install -e \".[dev]\")",
+      "Bash(.venv/bin/python -m pytest -v)",
+      "Bash(.venv/bin/python -m ruff check app/tools/usda.py app/tools/prices.py app/tools/web_search.py tests/test_tools.py)",
+      "Bash(.venv/bin/python -m pytest -q)",
+      "Bash(.venv/bin/python -m ruff check app/tools/ tests/test_tools.py)",
+      "Bash(.venv/bin/python -c ' *)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(.venv/bin/python -m ruff check app/llm/ tests/test_llm.py tests/test_llm_smoke.py)",
+      "Bash(.venv/bin/python -m ruff check app/llm/anthropic_provider.py)",
+      "Bash(.venv/bin/python -m pytest tests/test_agent_medical_risk.py -v)",
+      "Bash(.venv/bin/python -m ruff check app/agents/medical_risk.py app/core/agent_names.py app/core/base_agent.py app/tools/registry.py app/tools/fitness_calc.py tests/agent_helpers.py tests/test_agent_medical_risk.py)",
+      "Bash(.venv/bin/python -m ruff check --fix app/agents/medical_risk.py app/core/ app/tools/registry.py app/tools/fitness_calc.py tests/agent_helpers.py tests/test_agent_medical_risk.py)",
+      "Bash(.venv/bin/python -m ruff check app/agents/medical_risk.py app/core/ app/tools/ tests/agent_helpers.py tests/test_agent_medical_risk.py)",
+      "Bash(.venv/bin/python -m ruff check app/ tests/)"
+    ]
+  }
+}
